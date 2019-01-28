@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+	<title>ajax register</title>
+	<style type="text/css">
+		
+	</style>
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script type="text/javascript">
+		var a;
+		$(document).ready(function() {
+		$('#form').on('submit', function(e) {
+			e.preventDefault();
+			var upname = $('#username').val();
+			var uppass1 = $('#password1').val();
+			var uppass2 = $('#password2').val();
+			var upemail = $('#email').val();
+			var code = $('#code').val();
+			var sendform = {username:upname, password1:uppass1, password2:uppass2, email:upemail, code:code, action:'insert'};
+			$.when(ajax(sendform))
+			.done(function(){
+				alert(a);
+			});
+		});
+	});
+
+		var namebt = false;
+		var pass1bt = false;
+		var pass2bt = false;
+		var emailbt = false;
+
+		function ajax(data) {
+			var dtd = $.Deferred();
+			var xhr = new XMLHttpRequest();
+			var url = '';
+			for (var x in data) {
+				url += x + '=' + data[x] + '&'; 
+			}
+			url = url.replace(/&$/, '');
+			xhr.open('POST', 'register.php', true);
+			xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+			xhr.send(url);
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					$('#feedback').text(xhr.responseText);
+					if (xhr.responseText == 'The user name is available') {
+						namebt = true;
+					} 
+					if (xhr.responseText == 'User name already exists') {
+						namebt = false;
+					} 
+					if (xhr.responseText == 'The email is available') {
+						emailbt = true;
+					} 
+					if (xhr.responseText == 'email already exists') {
+						emailbt = false;
+					}
+					button(); 
+					a = xhr.responseText;
+					dtd.resolve();
+				}
+			};
+			return dtd;
+		}
+
+		function button() {
+			if (namebt && pass1bt && pass2bt && emailbt) {
+				$('#button').attr('disabled', false);
+			}
+		}
+		function checkName() {
+			$('#feedback').text('');
+			if ($('#username').val() == '') {
+				$('#feedback').text('The user name is none');
+				namebt = false;
+			} else if($('#username').val().length < 6) {
+				$('#feedback').text('The user name is less than 6');
+				namebt = false;
+			} else {
+				var name = $('#username').val();
+				var sendname = {username:name ,action:'checkname'};
+				ajax(sendname);
+				}
+			}
+
+		function checkPassFirst() {
+			$('#feedback').text('');
+			var pass = $('#password1').val();
+			if (pass == '' || pass.length > 16 || pass.length < 6) {
+				$('#feedback').text('password must be 6 to 16');
+				pass1 = false;
+			} else {
+				pass1bt = true;
+				button();
+			}
+		}
+
+		function checkPass() {
+			$('#feedback').text('');
+			var pass1 = $('#password1').val();
+			var pass2 = $('#password2').val();
+			if (pass1 != pass2) {
+				$('#feedback').text('The passwords do not match');
+				pass2 = false;
+			} else {
+				pass2bt = true;
+				button();
+			}
+		}
+
+		function checkEmail() {
+			$('#feedback').text('');
+			var email = $('#email').val();
+			if (!email.match(/^\w+((-\w+)|(\.\w+))*\@[A-Za-z0-9]+((\.|-)[A-Za-z0-9]+)*\.[A-Za-z0-9]+$/)) {
+				$('#feedback').text('invalid email name');
+				emailbt = false;
+			} else {
+				var sendemail = {email:email, action:'checkemail'};
+				ajax(sendemail);
+				}
+			}
+
+		function changeCode() {
+			$('#imagecode').attr('src', 'yz.php?nocache='+Math.random());
+		}
+
+		function clearTips(obj) {
+			var cl = $(obj);
+			cl.val('');
+		}
+
+
+
+		
+	</script>
+</head>
+<body>
+
+<form method="post" action="register.php" id="form">
+	<p><label for="username">username:</label><input type="text" name="username" id="username" onblur="checkName();" onfocus="clearTips(this)"></p>
+	<p><label for="password1">password:</label><input type="password" name="password1" id="password1" onblur="checkPassFirst()" onfocus="clearTips(this)"></p>
+	<p><label for="password2">password:</label><input type="password" name="password2" id="password2" onblur="checkPass()" onfocus="clearTips(this)"></p>
+	<p><label for="email">email:</label><input type="text" name="email" id="email" onblur="checkEmail()" onfocus="clearTips(this)"></p>
+	<img src="yz.php" title="change code" onclick="changeCode()" id="imagecode"><a href="javascript:changeCode()">change code</a><br>
+	<p><label for="code">input verification code</label><input type="text" name="code" id="code"  onfocus="clearTips(this)"></p>
+	<input type="submit" value="submit" disabled id="button">
+	<p id="feedback"></p>
+</form>
+
+</body>
+</html>
